@@ -23,7 +23,7 @@ For a client that launches Docker, use the image from GitHub Container Registry:
         "run", "--rm", "-i",
         "--env", "EXCALIDASH_URL",
         "--env", "EXCALIDASH_API_KEY",
-        "ghcr.io/latikdesu/excalidash-mcp@sha256:992cc43db9f25a57233e88adc3166245d4d2d4af3928574c330dc442c1ccf0ba"
+        "ghcr.io/latikdesu/excalidash-mcp:latest"
       ],
       "env": {
         "EXCALIDASH_URL": "https://draw.example.com",
@@ -34,7 +34,7 @@ For a client that launches Docker, use the image from GitHub Container Registry:
 }
 ```
 
-The image runs the stdio server by default. Keep `-i` for the protocol stream; do not add `-t` or publish a port. The digest pins the exact image; change it deliberately when upgrading.
+The image runs the stdio server by default. Keep `-i` for the protocol stream; do not add `-t` or publish a port. `:latest` tracks the newest release. Docker reuses an image it has already downloaded, so run `docker pull ghcr.io/latikdesu/excalidash-mcp:latest` when you want to update.
 
 Client configuration formats differ. If your client does not use `mcpServers`, supply the same command, arguments, and two environment variables in its server settings. Protect the config file if it contains the key, or use the client's secret store. The image does not contain your credentials.
 
