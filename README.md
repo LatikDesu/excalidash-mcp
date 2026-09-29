@@ -8,28 +8,7 @@ The server runs over stdio. Your MCP client starts it as a child process and sup
 
 You need a running ExcaliDash instance with the Drawing Agent API and an account API key. In ExcaliDash, create the key under **Profile → API keys** with `drawings:read`, `drawings:write`, `collections:read`, and `collections:write`. The drawing tools need only the two drawing scopes; collection tools need the collection scopes too.
 
-Use the public **frontend URL** of your ExcaliDash instance. The API client appends `/api` itself; do not point it at a backend service address. Your MCP client needs Node.js 20.6 or newer for the npm package and the development command below, or Docker for the container image.
-
-### npm
-
-Add a stdio server to a client that uses the `mcpServers` configuration format:
-
-```json
-{
-  "mcpServers": {
-    "excalidash": {
-      "command": "npx",
-      "args": ["-y", "excalidashapi-mcp@0.1.0"],
-      "env": {
-        "EXCALIDASH_URL": "https://draw.example.com",
-        "EXCALIDASH_API_KEY": "YOUR_ACCOUNT_KEY"
-      }
-    }
-  }
-}
-```
-
-Replace the URL and key. The package name is `excalidashapi-mcp`; `excalidash-mcp` without `api` is a different npm package. The version is pinned so a client restart cannot silently install a newer release.
+Use the public **frontend URL** of your ExcaliDash instance. The API client appends `/api` itself; do not point it at a backend service address. Docker is needed to run the published image. Node.js 20.6 or newer is needed only when running from source.
 
 ### Container image
 
@@ -44,7 +23,7 @@ For a client that launches Docker, use the image from GitHub Container Registry:
         "run", "--rm", "-i",
         "--env", "EXCALIDASH_URL",
         "--env", "EXCALIDASH_API_KEY",
-        "ghcr.io/latikdesu/excalidash-mcp:0.1.0"
+        "ghcr.io/latikdesu/excalidash-mcp@sha256:992cc43db9f25a57233e88adc3166245d4d2d4af3928574c330dc442c1ccf0ba"
       ],
       "env": {
         "EXCALIDASH_URL": "https://draw.example.com",
@@ -55,9 +34,9 @@ For a client that launches Docker, use the image from GitHub Container Registry:
 }
 ```
 
-The image runs the stdio server by default. Keep `-i` for the protocol stream; do not add `-t` or publish a port. For long-lived configurations, you can replace the version tag with the image digest shown by GHCR after publishing.
+The image runs the stdio server by default. Keep `-i` for the protocol stream; do not add `-t` or publish a port. The digest pins the exact image; change it deliberately when upgrading.
 
-Client configuration formats differ. If your client does not use `mcpServers`, supply the same command, arguments, and two environment variables in its server settings. Protect the config file if it contains the key, or use the client's secret store. Neither the npm package nor the image contains your credentials.
+Client configuration formats differ. If your client does not use `mcpServers`, supply the same command, arguments, and two environment variables in its server settings. Protect the config file if it contains the key, or use the client's secret store. The image does not contain your credentials.
 
 ## Tools
 
