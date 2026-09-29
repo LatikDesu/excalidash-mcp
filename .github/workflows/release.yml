@@ -1,0 +1,73 @@
+name: Verify and publish image
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm test
+      - run: npm audit
+      - name: Match release tag to npm package
+        id: version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            test "$GITHUB_REF_NAME" = "v$version"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Verify installable package without repository files
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm pack --json --pack-destination "$RUNNER_TEMP" > "$RUNNER_TEMP/pack.json"
+          filename=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))[0].filename' "$RUNNER_TEMP/pack.json")
+          tarball="$RUNNER_TEMP/$filename"
+          node scripts/smoke-distribution.mjs --npm "$tarball"
+          consumer="$RUNNER_TEMP/consumer"
+          mkdir -p "$consumer"
+          printf '{"name":"consumer-smoke","version":"0.0.0","private":true}\n' > "$consumer/package.json"
+          npm install --prefix "$consumer" --save-exact --no-fund "$tarball"
+          npm audit --prefix "$consumer"
+
+  image:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish multi-architecture image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/latikdesu/excalidash-mcp:${{ needs.verify.outputs.version }}
+      - name: Report immutable image reference
+        run: echo "ghcr.io/latikdesu/excalidash-mcp@${{ steps.build.outputs.digest }}"

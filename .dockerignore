@@ -1,0 +1,8 @@
+node_modules
+dist
+.gjc
+.env
+*.tgz
+.git
+.gitignore
+docs/

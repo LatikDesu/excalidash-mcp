@@ -1,0 +1,33 @@
+services:
+  excalidash-mcp:
+    build:
+      context: .
+    image: excalidash-mcp:local
+    container_name: excalidash-mcp
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MCP_PORT:-8080}:8080"
+    environment:
+      EXCALIDASH_URL: ${EXCALIDASH_URL:?Set public ExcaliDash URL}
+      EXCALIDASH_API_KEY: ${EXCALIDASH_API_KEY:?Set account API key}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080,http://[::1]:8080}
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: "8080"
+    command: ["node", "dist/http.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
