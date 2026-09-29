@@ -8,7 +8,28 @@ The server runs over stdio. Your MCP client starts it as a child process and sup
 
 You need a running ExcaliDash instance with the Drawing Agent API and an account API key. In ExcaliDash, create the key under **Profile → API keys** with `drawings:read`, `drawings:write`, `collections:read`, and `collections:write`. The drawing tools need only the two drawing scopes; collection tools need the collection scopes too.
 
-Use the public **frontend URL** of your ExcaliDash instance. The API client appends `/api` itself; do not point it at a backend service address. Docker is needed to run the published image. Node.js 20.6 or newer is needed only when running from source.
+Use the public **frontend URL** of your ExcaliDash instance. The API client appends `/api` itself; do not point it at a backend service address. Use Node.js 20.6 or newer for the npm package, or Docker for the container image.
+
+### npm
+
+Configure a client that uses the `mcpServers` format:
+
+```json
+{
+  "mcpServers": {
+    "excalidash": {
+      "command": "npx",
+      "args": ["-y", "excalidashapi-mcp@0.1.0"],
+      "env": {
+        "EXCALIDASH_URL": "https://draw.example.com",
+        "EXCALIDASH_API_KEY": "YOUR_ACCOUNT_KEY"
+      }
+    }
+  }
+}
+```
+
+Replace the URL and key.
 
 ### Container image
 
